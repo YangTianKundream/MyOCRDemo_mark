@@ -23,13 +23,17 @@ import com.mark.demo.myocrdemo_mark.utils.ToastUtils;
 
 import java.io.File;
 
+/**
+ * 文字识别 :http://ai.baidu.com/tech/ocr
+ * */
 public class MarkActivity extends AppCompatActivity implements View.OnClickListener{
 
     private static final String TAG = "MarkActivity";
-    private static final String API_KEY = "您的应用AK";
-    private static final String SECRET_KEY = "您的应用SK";
+    private static final String API_KEY = "ybCCSmm2IaltZeYWbCrpCGsU";
+    private static final String SECRET_KEY = "hNbt7wIMCpmF27lOaEjuwfr8S1jI5KtB";
     private static final int REQUEST_CODE_BANKCARD = 100; //银行卡的请求码
     private static final int REQUEST_CODE_DRIVING_LICENSE = 101; //驾驶证的请求码
+    private static final int REQUEST_CODE_CAR_CARD = 102;//车牌号的请求码
 
     private TextView resultTv;
 
@@ -62,7 +66,38 @@ public class MarkActivity extends AppCompatActivity implements View.OnClickListe
         findViewById(R.id.id_card_btn).setOnClickListener(this);
         findViewById(R.id.bankcard_btn).setOnClickListener(this);
         findViewById(R.id.driving_license_btn).setOnClickListener(this);
+        findViewById(R.id.car_card_btn).setOnClickListener(this);
         resultTv = (TextView) findViewById(R.id.info_tv);
+    }
+
+    @Override
+    public void onClick(View v) {
+        switch (v.getId()) {
+            case R.id.id_card_btn:
+                if (hasGotToken){
+                    //身份证
+                    startActivity(new Intent(mContext, IDCardActivity.class));
+                }
+                break;
+            case R.id.bankcard_btn:
+                if (hasGotToken){
+                    //银行卡
+                    scanBank();
+                }
+                break;
+            case R.id.driving_license_btn:
+                if (hasGotToken){
+                    //驾驶证
+                    scanDrivingLicense();
+                }
+                break;
+            case R.id.car_card_btn:
+                if (hasGotToken){
+                    //车牌号识别
+                    scanCarCard();
+                }
+                break;
+        }
     }
 
     //授权文件（安全模式）
@@ -117,6 +152,18 @@ public class MarkActivity extends AppCompatActivity implements View.OnClickListe
         startActivityForResult(intent, REQUEST_CODE_BANKCARD);
     }
 
+    /**
+     * 扫描车牌号
+     * */
+    private void scanCarCard() {
+        Intent intent = new Intent(getApplicationContext(),CameraActivity.class);
+        intent.putExtra(CameraActivity.KEY_OUTPUT_FILE_PATH,
+                FileUtils.getSaveFile(getApplicationContext()).getAbsolutePath());
+        intent.putExtra(CameraActivity.KEY_CONTENT_TYPE,
+                CameraActivity.CONTENT_TYPE_GENERAL);
+        startActivityForResult(intent,REQUEST_CODE_CAR_CARD);
+    }
+
     //扫描驾驶证
     private void scanDrivingLicense() {
         Intent intent = new Intent(MarkActivity.this, CameraActivity.class);
@@ -144,7 +191,8 @@ public class MarkActivity extends AppCompatActivity implements View.OnClickListe
                 Log.i(TAG, "bankCardNumber:---->" + bankCardNumber);
                 Log.i(TAG, "bankName:---->" + bankName);
                 Log.i(TAG, "type:---->" + type);
-                resultTv.setText("银行卡号：" + bankCardNumber + "\n" + "开户行名称：" + bankName + "\n" + "银行卡类型：" + type);
+                String str = "银行卡号：" + bankCardNumber + "\n" + "开户行名称：" + bankName + "\n" + "银行卡类型：" + type;
+                resultTv.setText(str);
             }
 
             @Override
@@ -154,6 +202,9 @@ public class MarkActivity extends AppCompatActivity implements View.OnClickListe
         });
     }
 
+    /**
+     * 驾驶证的识别
+     * */
     public void recDrivingLicense(String filePath) {
         OcrRequestParams param = new OcrRequestParams();
         param.setImageFile(new File(filePath));
@@ -164,7 +215,8 @@ public class MarkActivity extends AppCompatActivity implements View.OnClickListe
                     Log.i(TAG, "onResult: 扫描驾驶证成功");
                     String jsonRes = result.getJsonRes();
                     Log.i(TAG, "jsonRes: " + jsonRes);
-                    resultTv.setText("驾驶证信息:" + jsonRes);
+                    String str = "驾驶证信息:" + jsonRes;
+                    resultTv.setText(str);
                 }
             }
 
@@ -175,24 +227,31 @@ public class MarkActivity extends AppCompatActivity implements View.OnClickListe
         });
     }
 
-    @Override
-    public void onClick(View v) {
-        switch (v.getId()) {
-            case R.id.id_card_btn:
-                //身份证
-                startActivity(new Intent(mContext, IDCardActivity.class));
-                break;
-            case R.id.bankcard_btn:
-                //银行卡
-                scanBank();
-                break;
-            case R.id.driving_license_btn:
-                //驾驶证
-                scanDrivingLicense();
-                break;
-        }
-    }
+    /**
+     * 车牌号的识别
+     * @param filePath
+     */
+    private void recCarCard(String filePath) {
+        OcrRequestParams params = new OcrRequestParams();
+        params.setImageFile(new File(filePath));
+        OCR.getInstance().recognizeLicensePlate(params, new OnResultListener<OcrResponseResult>() {
+            @Override
+            public void onResult(OcrResponseResult ocrResponseResult) {
+                if (ocrResponseResult != null){
+                    Log.i(TAG, "onResult:扫描车牌号成功");
+                    String jsonRes = ocrResponseResult.getJsonRes();
+                    Log.i(TAG, "jsonRes: " + jsonRes);
+                    String str = "车牌号信息:" + jsonRes;
+                    resultTv.setText(str);
+                }
+            }
 
+            @Override
+            public void onError(OCRError ocrError) {
+                Log.i(TAG, "onError: 扫描车牌号错误  " + ocrError.getMessage());
+            }
+        });
+    }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -207,5 +266,11 @@ public class MarkActivity extends AppCompatActivity implements View.OnClickListe
             Log.e("mark",FileUtils.getSaveFile(getApplicationContext()).getAbsolutePath());
             recDrivingLicense(FileUtils.getSaveFile(getApplicationContext()).getAbsolutePath());
         }
+        //拍摄类型：车牌号
+        if (requestCode == REQUEST_CODE_CAR_CARD && resultCode == Activity.RESULT_OK){
+            Log.e("mark",FileUtils.getSaveFile(getApplicationContext()).getAbsolutePath());
+            recCarCard(FileUtils.getSaveFile(getApplicationContext()).getAbsolutePath());
+        }
     }
+
 }

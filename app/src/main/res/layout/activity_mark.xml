@@ -12,18 +12,23 @@
     <Button
         android:id="@+id/id_card_btn"
         style="@style/main_activity_btn_style"
-        android:text="身份证" />
+        android:text="@string/id_card" />
 
     <Button
         android:id="@+id/bankcard_btn"
         style="@style/main_activity_btn_style"
-        android:text="银行卡" />
+        android:text="@string/bankcard" />
 
 
     <Button
         android:id="@+id/driving_license_btn"
         style="@style/main_activity_btn_style"
-        android:text="驾驶证识别" />
+        android:text="@string/drivingcard" />
+
+    <Button
+        android:id="@+id/car_card_btn"
+        style="@style/main_activity_btn_style"
+        android:text="@string/car_card" />
 
     <TextView
         android:id="@+id/info_tv"

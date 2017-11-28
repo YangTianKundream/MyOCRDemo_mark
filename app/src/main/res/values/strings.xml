@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">MyOCRDemo_mark</string>
+    <string name="car_card">车牌号识别</string>
+    <string name="drivingcard">驾驶证识别</string>
+    <string name="bankcard">银行卡</string>
+    <string name="id_card">身份证</string>
 </resources>
